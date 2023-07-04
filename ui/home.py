@@ -1,6 +1,6 @@
 from PySide6 import QtWidgets
 from PySide6.QtWidgets import QMainWindow, QMenuBar, QGroupBox, QGridLayout, QWidget, QTabWidget, QTableWidget, \
-    QPushButton, QAbstractItemView, QComboBox, QSizePolicy, QLineEdit
+    QPushButton, QAbstractItemView, QComboBox, QSizePolicy, QLineEdit, QTableWidgetItem
 
 import global_objects
 from backend.network import Request, Response
@@ -101,15 +101,37 @@ class _EditHeadersWidget(QWidget):
 
         self.add_button = QPushButton("Add")
         self.add_button.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
+        self.add_button.clicked.connect(self.add_new)
         self._layout.addWidget(self.add_button, 0, 0)
+
         self.remove_button = QPushButton("Remove")
         self.remove_button.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
+        self.remove_button.clicked.connect(self.remove)
         self._layout.addWidget(self.remove_button, 0, 1)
+
         self.search = QLineEdit()
         self.search.setPlaceholderText("Search")
         self._layout.addWidget(self.search, 0, 2)
+
         self.table = self._Table()
         self._layout.addWidget(self.table, 1, 0, 1, 3)
+
+    def add(self, key: str, value: str):
+        row = self.table.rowCount()
+        self.table.insertRow(row)
+        self.table.setItem(row, 0, QTableWidgetItem(key))
+        self.table.setItem(row, 1, QTableWidgetItem(value))
+
+    def add_new(self):
+        row = self.table.rowCount()
+        self.table.insertRow(row)
+        item = QTableWidgetItem()
+        self.table.setItem(row, 0, item)
+        self.table.editItem(item)
+
+    def remove(self):
+        row = self.table.currentRow()
+        self.table.removeRow(row)
 
 
 class _RequestAttributesWidget(QTabWidget):
