@@ -1,6 +1,7 @@
+import orjson
 from PySide6 import QtWidgets
 from PySide6.QtWidgets import QMainWindow, QMenuBar, QGroupBox, QGridLayout, QWidget, QTabWidget, QTableWidget, \
-    QPushButton, QAbstractItemView, QComboBox, QSizePolicy, QLineEdit, QTableWidgetItem
+    QPushButton, QAbstractItemView, QComboBox, QSizePolicy, QLineEdit, QTableWidgetItem, QTextEdit
 
 import global_objects
 from backend.network import Request, Response
@@ -28,10 +29,59 @@ class WindowHome(QMainWindow):
         self._layout.addWidget(self._assemble_request)
 
 
-class _EditRequestBodyWidget(QTableWidget):
+class _EditRequestBodyWidget(QWidget):
     """Widget for editing the request body"""
     def __init__(self):
         super().__init__()
+        self._layout = QGridLayout()
+        self.setLayout(self._layout)
+
+        self.editor = self._Editor()
+        self._layout.addWidget(self.editor, 1, 0)
+        self.prettify_button = QPushButton("Prettify")
+        self.prettify_button.clicked.connect(self.editor.prettify_json)
+        self._layout.addWidget(self.prettify_button, 0, 0)
+
+    class _Editor(QTextEdit):
+        def __init__(self):
+            super().__init__()
+            self.setFont(global_objects.mono_font)
+            self._json: str | None = None
+
+        def prettify_json(self):
+            """
+            Prettifies the JSON
+            :return: None
+            """
+            try:
+                self._json = self.toPlainText()
+                parsed_json = orjson.loads(self._json)
+                self._json = orjson.dumps(parsed_json, option=orjson.OPT_INDENT_2).decode()
+                self.setText(self._json)
+            except orjson.JSONDecodeError:
+                pass
+
+        def set_json(self, json_: str):
+            self._json = orjson.dumps(json_, option=orjson.OPT_INDENT_2).decode()
+            self._highlight_syntax()
+
+        def _highlight_syntax(self):
+            """
+            Iterates over the lines in the JSON, applying HTML syntax highlighting
+            todo needs work
+            :return: None
+            """
+            self.setText(self._json)
+            '''split_json = self._json.split("\n")
+            for elem, line in enumerate(split_json):
+                if "{" in line:
+                    split_json[elem] = '<p style="color:#adadad">{</p>'
+    
+            # convert the split list back into a string
+            new_json = ""
+            for x in split_json:
+                new_json += f"{x}\n"
+            self.setText(new_json)'''
 
 
 class _EditQueryParametersWidget(QWidget):
@@ -62,15 +112,37 @@ class _EditQueryParametersWidget(QWidget):
 
         self.add_button = QPushButton("Add")
         self.add_button.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
+        self.add_button.clicked.connect(self.add_new)
         self._layout.addWidget(self.add_button, 0, 0)
+
         self.remove_button = QPushButton("Remove")
         self.remove_button.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
+        self.remove_button.clicked.connect(self.remove)
         self._layout.addWidget(self.remove_button, 0, 1)
+
         self.search = QLineEdit()
         self.search.setPlaceholderText("Search")
         self._layout.addWidget(self.search, 0, 2)
+
         self.table = self._Table()
         self._layout.addWidget(self.table, 1, 0, 1, 3)
+
+    def add(self, key: str, value: str):
+        row = self.table.rowCount()
+        self.table.insertRow(row)
+        self.table.setItem(row, 0, QTableWidgetItem(key))
+        self.table.setItem(row, 1, QTableWidgetItem(value))
+
+    def add_new(self):
+        row = self.table.rowCount()
+        self.table.insertRow(row)
+        item = QTableWidgetItem()
+        self.table.setItem(row, 0, item)
+        self.table.editItem(item)
+
+    def remove(self):
+        row = self.table.currentRow()
+        self.table.removeRow(row)
 
 
 class _EditHeadersWidget(QWidget):
