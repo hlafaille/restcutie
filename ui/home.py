@@ -4,6 +4,7 @@ from PySide6.QtWidgets import QMainWindow, QMenuBar, QGroupBox, QGridLayout, QWi
 
 from backend.network import Request, Response
 from ui.custom_widgets import LineEditWithLabel
+from ui.response_viewer import WindowResponseViewer
 
 
 class WindowHome(QMainWindow):
@@ -156,7 +157,8 @@ class AssembleRequestWidget(QGroupBox):
         :param response:
         :return:
         """
-        print(response.status_code)
+        response_viewer = WindowResponseViewer(self, response)
+        response_viewer.exec()
 
     def send_request(self):
         """

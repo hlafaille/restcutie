@@ -14,6 +14,15 @@ class Response:
     status_code: int
     response_body: dict | list | str
     response_headers: dict
+    request_url: str
+    request_method: str
+
+
+class WrappedQNetworkReply(QObject):
+    def __init__(self, network_reply: QNetworkReply, method: str):
+        super().__init__()
+        self.method = method
+        self.network_reply = network_reply
 
 
 class Request(QObject):
@@ -24,7 +33,7 @@ class Request(QObject):
         super().__init__(parent)
 
         # variables
-        self._qt_reply: QNetworkReply | None = None
+        self._qt_reply: WrappedQNetworkReply | None = None
 
     def custom(self, method: str, url: str, query_params: dict | None, headers: dict | None, body: dict | list | str | None):
         """
@@ -49,13 +58,14 @@ class Request(QObject):
                 qt_request.setHeader(x, headers[x])
 
         # send the request (we cant use named parameters here... why?)
-        self._qt_reply = global_objects.nam.sendCustomRequest(
+        qt_reply = global_objects.nam.sendCustomRequest(
             qt_request,
             method.encode(),
             orjson.dumps(body),
         )
-        self._qt_reply.errorOccurred.connect(self._emit_error)
-        self._qt_reply.readyRead.connect(self._build_emit_response)
+        qt_reply.errorOccurred.connect(self._emit_error)
+        qt_reply.readyRead.connect(self._build_emit_response)
+        self._qt_reply = WrappedQNetworkReply(qt_reply, method)
 
     def _emit_error(self) -> None:
         print("error")
@@ -68,21 +78,23 @@ class Request(QObject):
         """
         # try to parse the response payload as JSON
         try:
-            parsed_payload = orjson.loads(self._qt_reply.readAll().data())
+            parsed_payload = orjson.loads(self._qt_reply.network_reply.readAll().data())
         except orjson.JSONDecodeError as e:
             self.error.emit("Response is not parsable JSON")
             return
 
         # parse the response headers
         parsed_headers = {}
-        for x in self._qt_reply.rawHeaderPairs():
+        for x in self._qt_reply.network_reply.rawHeaderPairs():
             x: tuple[QByteArray, QByteArray]
             parsed_headers[x[0].toStdString()] = x[1].toStdString()
 
         # build and emit the response object
         response = Response(
-            status_code=self._qt_reply.attribute(QNetworkRequest.Attribute.HttpStatusCodeAttribute),
+            status_code=self._qt_reply.network_reply.attribute(QNetworkRequest.Attribute.HttpStatusCodeAttribute),
             response_body=parsed_payload,
-            response_headers=parsed_headers
+            response_headers=parsed_headers,
+            request_url=self._qt_reply.network_reply.url().toString(),
+            request_method=self._qt_reply.method
         )
         self.response.emit(response)
