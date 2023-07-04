@@ -1,6 +1,6 @@
 from copy import deepcopy
 from dataclasses import dataclass
-from urllib.parse import urlencode
+from urllib.parse import urlencode, quote
 
 from PySide6.QtCore import QObject, Signal, QByteArray
 from PySide6.QtNetwork import QNetworkRequest, QNetworkReply
@@ -49,7 +49,7 @@ class Request(QObject):
         appended_url = deepcopy(url)
         if type(query_params) is dict:
             for x in query_params.keys():
-                appended_url += f"?{urlencode(x)}={urlencode(query_params[x])}"
+                appended_url += f"?{quote(x)}={quote(query_params[x])}"
 
         # build the qt network request object
         qt_request = QNetworkRequest(appended_url)

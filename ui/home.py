@@ -31,17 +31,6 @@ class WindowHome(QMainWindow):
 
 class _EditRequestBodyWidget(QWidget):
     """Widget for editing the request body"""
-    def __init__(self):
-        super().__init__()
-        self._layout = QGridLayout()
-        self.setLayout(self._layout)
-
-        self.editor = self._Editor()
-        self._layout.addWidget(self.editor, 1, 0)
-        self.prettify_button = QPushButton("Prettify")
-        self.prettify_button.clicked.connect(self.editor.prettify_json)
-        self._layout.addWidget(self.prettify_button, 0, 0)
-
     class _Editor(QTextEdit):
         def __init__(self):
             super().__init__()
@@ -72,16 +61,27 @@ class _EditRequestBodyWidget(QWidget):
             :return: None
             """
             self.setText(self._json)
-            '''split_json = self._json.split("\n")
-            for elem, line in enumerate(split_json):
-                if "{" in line:
-                    split_json[elem] = '<p style="color:#adadad">{</p>'
-    
-            # convert the split list back into a string
-            new_json = ""
-            for x in split_json:
-                new_json += f"{x}\n"
-            self.setText(new_json)'''
+
+    def __init__(self):
+        super().__init__()
+        self._layout = QGridLayout()
+        self.setLayout(self._layout)
+
+        self.editor = self._Editor()
+        self._layout.addWidget(self.editor, 1, 0)
+        self.prettify_button = QPushButton("Prettify")
+        self.prettify_button.clicked.connect(self.editor.prettify_json)
+        self._layout.addWidget(self.prettify_button, 0, 0)
+
+    def get(self) -> dict:
+        """
+        Gets the content of Editor as a dictionary
+        :return: Dictionary
+        """
+        try:
+            return orjson.loads(self.editor.toPlainText())
+        except orjson.JSONDecodeError:
+            return {}
 
 
 class _EditQueryParametersWidget(QWidget):
@@ -144,6 +144,18 @@ class _EditQueryParametersWidget(QWidget):
         row = self.table.currentRow()
         self.table.removeRow(row)
 
+    def get(self) -> dict:
+        """
+        Get this table as a key/value pair
+        :return: None
+        """
+        content = {}
+        for row in range(self.table.rowCount()):
+            key = self.table.item(row, 0).text()
+            value = self.table.item(row, 1).text()
+            content[key] = value
+        return content
+
 
 class _EditHeadersWidget(QWidget):
     """Widget for editing headers"""
@@ -205,6 +217,18 @@ class _EditHeadersWidget(QWidget):
         row = self.table.currentRow()
         self.table.removeRow(row)
 
+    def get(self) -> dict:
+        """
+        Get this table as a key/value pair
+        :return: None
+        """
+        content = {}
+        for row in range(self.table.rowCount()):
+            key = self.table.item(row, 0).text()
+            value = self.table.item(row, 1).text()
+            content[key] = value
+        return content
+
 
 class _RequestAttributesWidget(QTabWidget):
     """Widget for modifying the attributes of a request"""
@@ -212,10 +236,10 @@ class _RequestAttributesWidget(QTabWidget):
         super().__init__()
         self.headers_editor = _EditHeadersWidget()
         self.addTab(self.headers_editor, "Headers")
-        self.query_parameters = _EditQueryParametersWidget()
-        self.addTab(self.query_parameters, "Query Parameters")
-        self.request_body = _EditRequestBodyWidget()
-        self.addTab(self.request_body, "Body")
+        self.query_parameters_editor = _EditQueryParametersWidget()
+        self.addTab(self.query_parameters_editor, "Query Parameters")
+        self.request_body_editor = _EditRequestBodyWidget()
+        self.addTab(self.request_body_editor, "Body")
 
 
 class AssembleRequestWidget(QGroupBox):
@@ -267,7 +291,7 @@ class AssembleRequestWidget(QGroupBox):
         request.custom(
             method=self.method.currentText(),
             url=self.base_url + self.path,
-            query_params=None,
-            headers=None,
-            body=None
+            query_params=self._request_attributes.query_parameters_editor.get(),
+            headers=self._request_attributes.headers_editor.get(),
+            body=self._request_attributes.request_body_editor.get()
         )
