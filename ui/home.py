@@ -2,6 +2,7 @@ from PySide6 import QtWidgets
 from PySide6.QtWidgets import QMainWindow, QMenuBar, QGroupBox, QGridLayout, QWidget, QTabWidget, QTableWidget, \
     QPushButton, QAbstractItemView, QComboBox, QSizePolicy, QLineEdit
 
+import global_objects
 from backend.network import Request, Response
 from ui.custom_widgets import LineEditWithLabel
 from ui.response_viewer import WindowResponseViewer
@@ -132,10 +133,12 @@ class AssembleRequestWidget(QGroupBox):
 
         # base url input box
         self.base_url = LineEditWithLabel(self, label="Base URL", placeholder="https://api.mysite.com")
+        self.base_url.line_edit.setFont(global_objects.mono_font)
         self._layout.addWidget(self.base_url, 0, 0)
 
         # path to resource input box
         self.path = LineEditWithLabel(self, label="Path", placeholder="/path/to/resource")
+        self.path.line_edit.setFont(global_objects.mono_font)
         self._layout.addWidget(self.path, 0, 1)
 
         # tab widget

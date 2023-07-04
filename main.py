@@ -1,7 +1,7 @@
 import sys
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QPalette, QColor, QFontDatabase
+from PySide6.QtCore import Qt, qDebug
+from PySide6.QtGui import QPalette, QColor, QFontDatabase, QFont
 from PySide6.QtWidgets import QApplication
 
 import global_objects
@@ -11,7 +11,10 @@ from ui.home import WindowHome
 if __name__ == "__main__":
     global_objects.app = QApplication()
 
-    global_objects.mono_font_id = QFontDatabase().addApplicationFont("resources/jetbrains_mono.ttf")
+    # populate font
+    font_database = QFontDatabase()
+    global_objects.mono_font_id = font_database.addApplicationFont("resources/jetbrains_mono.ttf")
+    global_objects.mono_font = QFont("JetBrains Mono NL")
 
     global_objects.app.setStyle("Fusion")
     dark_palette = QPalette()

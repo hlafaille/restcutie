@@ -1,8 +1,10 @@
 import orjson
 from PySide6 import QtWidgets
 from PySide6.QtCore import QObject
+from PySide6.QtGui import QSyntaxHighlighter
 from PySide6.QtWidgets import QDialog, QGridLayout, QTableWidget, QAbstractItemView, QTableWidgetItem, QTextEdit
 
+import global_objects
 from backend.network import Response
 
 
@@ -10,13 +12,30 @@ class _ResponseBodyWidget(QTextEdit):
     def __init__(self):
         super().__init__()
         self.setReadOnly(True)
+        self.setFont(global_objects.mono_font)
+        self._json: str | None = None
 
     def set_json(self, json_: str):
-        self.setText(orjson.dumps(json_, option=orjson.OPT_INDENT_2).decode())
+        self._json = orjson.dumps(json_, option=orjson.OPT_INDENT_2).decode()
         self._highlight_syntax()
 
     def _highlight_syntax(self):
-        pass
+        """
+        Iterates over the lines in the JSON, applying HTML syntax highlighting
+        todo needs work
+        :return: None
+        """
+        self.setText(self._json)
+        '''split_json = self._json.split("\n")
+        for elem, line in enumerate(split_json):
+            if "{" in line:
+                split_json[elem] = '<p style="color:#adadad">{</p>'
+
+        # convert the split list back into a string
+        new_json = ""
+        for x in split_json:
+            new_json += f"{x}\n"
+        self.setText(new_json)'''
 
 
 class _ResponseHeadersWidget(QTableWidget):
