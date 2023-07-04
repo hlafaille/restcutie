@@ -1,7 +1,9 @@
+import os.path
+
 import orjson
 from PySide6 import QtWidgets
 from PySide6.QtWidgets import QMainWindow, QMenuBar, QGroupBox, QGridLayout, QWidget, QTabWidget, QTableWidget, \
-    QPushButton, QAbstractItemView, QComboBox, QSizePolicy, QLineEdit, QTableWidgetItem, QTextEdit
+    QPushButton, QAbstractItemView, QComboBox, QSizePolicy, QLineEdit, QTableWidgetItem, QTextEdit, QFileDialog
 
 import global_objects
 from backend.network import Request, Response
@@ -19,14 +21,43 @@ class WindowHome(QMainWindow):
         self._layout = QGridLayout(self._widget)
         self.setCentralWidget(self._widget)
 
-        # do menu bar
+        # build menu bar
         self._menu_bar = QMenuBar(self)
         self._file_menu = self._menu_bar.addMenu("File")
-        self._file_menu = self._menu_bar.addMenu("Edit")
+        file_open = self._file_menu.addAction("Open")
+        file_open.triggered.connect(self.open_session)
+        file_save = self._file_menu.addAction("Save")
+        file_save.triggered.connect(self.save_session)
+
+        self._edit_menu = self._menu_bar.addMenu("Edit")
+        edit_variables = self._edit_menu.addAction("Variables")
+        self._edit_menu.addSeparator()
         self.setMenuBar(self._menu_bar)
 
         self._assemble_request = AssembleRequestWidget()
         self._layout.addWidget(self._assemble_request)
+
+    def open_session(self):
+        """
+        Open a session from a file
+        :return:
+        """
+        def _open(path: str):
+            print(path)
+        file = QFileDialog(self, "Open Session", os.path.expanduser("~"), ".sesh")
+        file.fileSelected.connect(_open)
+        file.exec()
+
+    def save_session(self):
+        """
+        Write the session to a file
+        :return: None
+        """
+        def _save(path: str):
+            print(path)
+        file = QFileDialog(self, "Save Session", os.path.expanduser("~"), ".sesh")
+        file.fileSelected.connect(_save)
+        file.exec()
 
 
 class _EditRequestBodyWidget(QWidget):
