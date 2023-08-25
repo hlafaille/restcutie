@@ -27,7 +27,7 @@ class WrappedQNetworkReply(QObject):
 
 class Request(QObject):
     response = Signal(Response)
-    error = Signal(str)
+    error = Signal()
 
     def __init__(self, parent: QObject):
         super().__init__(parent)
@@ -68,7 +68,7 @@ class Request(QObject):
         self._qt_reply = WrappedQNetworkReply(qt_reply, method)
 
     def _emit_error(self) -> None:
-        print("error")
+        self.error.emit()
 
     def _build_emit_response(self) -> None:
         """
@@ -80,7 +80,7 @@ class Request(QObject):
         try:
             parsed_payload = orjson.loads(self._qt_reply.network_reply.readAll().data())
         except orjson.JSONDecodeError as e:
-            self.error.emit("Response is not parsable JSON")
+            self.error.emit()
             return
 
         # parse the response headers
