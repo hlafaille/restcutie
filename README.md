@@ -7,4 +7,5 @@ and only on Linux.
 
 # Contribution
 Contributions are always welcome. Currently, I am looking to implement the following features:
+* Proper Error Handling
 * JSON syntax highlighting
